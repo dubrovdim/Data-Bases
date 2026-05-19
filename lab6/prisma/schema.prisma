@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+model customers {
+  customer_id Int       @id @default(autoincrement())
+  name        String    @db.VarChar(100)
+  email       String?   @unique @db.VarChar(150)
+  rentals     rentals[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model movies {
+  movie_id Int       @id @default(autoincrement())
+  title    String    @db.VarChar(150)
+  price    Decimal   @db.Decimal(5, 2)
+  rentals  rentals[]
+  reviews reviews[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model payments {
+  payment_id Int      @id @default(autoincrement())
+  rental_id  Int?     @unique(map: "unique_rental_id")
+  amount     Decimal  @db.Decimal(8, 2)
+  rentals    rentals? @relation(fields: [rental_id], references: [rental_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model rentals {
+  rental_id   Int        @id @default(autoincrement())
+  customer_id Int?
+  movie_id    Int?
+  rental_date DateTime   @default(dbgenerated("CURRENT_DATE")) @db.Date
+  return_date DateTime?  @db.Date
+  payments    payments?
+  customers   customers? @relation(fields: [customer_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+  movies      movies?    @relation(fields: [movie_id], references: [movie_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model reviews {
+  review_id  Int      @id @default(autoincrement())
+  rating     Int
+  comment    String?  @db.Text
+  movie_id   Int
+  movies     movies   @relation(fields: [movie_id], references: [movie_id], onDelete: Cascade, onUpdate: NoAction)
+}
